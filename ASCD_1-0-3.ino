@@ -8,7 +8,7 @@
 // warranty, express or implied, as to its usefulness for any purpose.
 // 
 // @brief 
-// This is the Arduino 8x 18650 Smart Charger / Discharger Code
+// This is the Arduino 7x  Smart Charger / Discharger Code
 //
 // Current implementation: 
 // TP4056, Rotary Encoder KY-040 Module, Temp Sensor DS18B20
@@ -20,11 +20,13 @@
 //       Web: www.vortexit.co.nz
 
 
-static const uint8_t batteryVolatgePins[] =     {A0,A2,A4,A6,A8,A10,A12,A14};
-static const uint8_t batteryVolatgeDropPins[] = {A1,A3,A5,A7,A9,A11,A13,A15};
-static const uint8_t chargeMosfetPins[] =       {22,25,28,31,34,37,40,43};
-static const uint8_t chargeLedPins[] =          {23,26,29,32,35,38,41,44};
-static const uint8_t dischargeMosfetPins[] =    {24,27,30,33,36,39,42,45};
+static const uint8_t batteryVolatgePins[] =     {A0,A2,A4,A6,A8,A10,A12};
+static const uint8_t batteryVolatgeDropPins[] = {A1,A3,A5,A7,A9,A11,A13};
+static const uint8_t irTestRelayPins[] = 		{11,12,13,14,15,16,17}
+static const uint8_t chargeMosfetPins[] =       {22,25,28,31,34,37,40};
+static const uint8_t chargeLedPins[] =          {23,26,29,32,35,38,41};
+static const uint8_t dischargeMosfetPins[] =    {24,27,30,33,36,39,42};
+static const uint8_t impedanceMeterPins[] = 	{A14,A15};
 
 #define TEMPERATURE_PRECISION 9
 
@@ -77,8 +79,8 @@ DallasTemperature sensors(&oneWire);
 extern SPISettings wiznet_SPI_settings;
 
 // Constant Variables
-const byte modules = 8; // Number of Modules
-const char server[] = "submit.vortexit.co.nz";    // Server to connect to send and recieve data
+const byte modules = 7; // Number of Modules
+// const char server[] = "submit.vortexit.co.nz";    // Server to connect to send and recieve data
 
 //--------------------------------------------------------------------------
 // Initialization
@@ -1085,3 +1087,12 @@ float readPage()
 	}                                                                                                        
 }
 
+float calculateImpedance()
+{
+	const float loadResistance = 5.0;
+	const float diodeFV = 0.2;
+	const float protectionResistance = 150.0;
+	float meterBattery = analogRead(impedanceMeterPins[0]) * referenceVoltage / 1023.0;
+	float meterResistor =  analogRead(impedanceMeterPins[1]) * referenceVoltage / 1023.0;
+	return (loadResistance*meterBattery)/meterResistor - loadResistance
+}

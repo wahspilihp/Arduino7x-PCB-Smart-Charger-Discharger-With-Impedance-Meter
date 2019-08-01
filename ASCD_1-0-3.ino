@@ -110,6 +110,7 @@ byte tempCountAmbient = 0;
 byte tempAmbient = 0;
 char lcdLine2[25];
 char lcdLine3[25];
+float impedances[modules];
 
 // readPage Variables
 char serverResult[32]; // string for incoming serial data
@@ -1087,12 +1088,25 @@ float readPage()
 	}                                                                                                        
 }
 
+
+/*
+Calculates the impedance of a cell.
+While it should work with any non-zero voltage across the cell, 
+ it will be more precise to use a higher voltage, 
+ but we don't want to saturate the ADC either.
+*/
 float calculateImpedance()
 {
 	const float loadResistance = 5.0;
 	const float diodeFV = 0.2;
 	const float protectionResistance = 150.0;
-	float meterBattery = analogRead(impedanceMeterPins[0]) * referenceVoltage / 1023.0;
-	float meterResistor =  analogRead(impedanceMeterPins[1]) * referenceVoltage / 1023.0;
-	return (loadResistance*meterBattery)/meterResistor - loadResistance
+	const int threshold  = 1000;
+	const int arMax = 1023;
+	do{
+		int arBattery = analogRead(impedanceMeterPins[0]);
+		int arResistor = analogRead(impedanceMeterPins[1]);
+	} while (!((arBattery > threshold) && (arBattery < arMax)));
+	float meterBattery = arBattery * referenceVoltage / 1023.0;
+	float meterResistor =  arResistor * referenceVoltage / 1023.0;
+	return (loadResistance*meterBattery)/meterResistor - loadResistance;
 }

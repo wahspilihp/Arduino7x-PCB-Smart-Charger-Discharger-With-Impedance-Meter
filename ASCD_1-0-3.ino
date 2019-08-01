@@ -27,6 +27,8 @@ static const uint8_t chargeMosfetPins[] =       {22,25,28,31,34,37,40};
 static const uint8_t chargeLedPins[] =          {23,26,29,32,35,38,41};
 static const uint8_t dischargeMosfetPins[] =    {24,27,30,33,36,39,42};
 static const uint8_t impedanceMeterPins[] = 	{A14,A15};
+static const uint8_t impedanceMeterControlPins[] = {};
+static uint8_t connectedIMPin = 255;
 
 #define TEMPERATURE_PRECISION 9
 
@@ -744,7 +746,14 @@ void cycleStateValues()
 			getBatteryVoltage(i);
 			break;
 			
-		case 7: // Completed
+		case 7: // Calculate impedance
+			if (connectImpedanceMeter(i)){
+				impedance[i] = calculateImpedance();
+				disconnectImpedanceMeter();
+				cycleState[i] = 8;
+			}
+
+		case 8: // Completed
 			if (!batteryCheck(i)) batteryDetectedCount[i]++;
 			if (batteryDetectedCount[i] == 2) 
 			{
@@ -1109,4 +1118,18 @@ float calculateImpedance()
 	float meterBattery = arBattery * referenceVoltage / 1023.0;
 	float meterResistor =  arResistor * referenceVoltage / 1023.0;
 	return (loadResistance*meterBattery)/meterResistor - loadResistance;
+}
+
+bool connectImpedanceMeter(byte i){
+	if (connectedIMPin == 255){
+		connectedIMPin = i;
+		digitalWrite(impedanceMeterControlPins[i], HIGH);
+		return TRUE;
+	}
+	return FALSE;
+}
+
+disconnectImpedanceMeter(){
+	digitalWrite(impedanceMeterControlPins[connectedIMPin], LOW);
+	connectedIMPin = 255;
 }
